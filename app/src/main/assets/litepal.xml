@@ -1,0 +1,10 @@
+<litepal>
+    <dbname value ="information_get"/>
+    <version value = "1"/>
+
+    <list>
+        <mapping class = "com.example.informationget.db.Information"/>
+
+    </list>
+
+</litepal>
