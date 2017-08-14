@@ -21,15 +21,12 @@ public class Util {
             try {
 
                 JSONObject jsonObject = new JSONObject(response);
-                Log.d(TAG, ": responese is " + response);
 
                 JSONArray allInformation = jsonObject.getJSONArray("results");
 
-                Log.d(TAG, "handleGankApiResponse:allInformation is  "+allInformation);
-
                 for (int i = 0;i<allInformation.length();i++){
                     JSONObject androidObject = allInformation.getJSONObject(i);
-                    Log.d(TAG, "handleGankApiResponse: androidObject" + androidObject);
+                    //Log.d(TAG, "handleGankApiResponse: androidObject" + androidObject);
                     Information information = new Information();
                     //Log.d(TAG, "handleGankApiResponse: 1 " + androidObject.getString("error"));
 
