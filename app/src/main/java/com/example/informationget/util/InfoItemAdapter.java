@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.example.informationget.DisplayActivity;
+import com.example.informationget.MainActivity;
 import com.example.informationget.R;
 import com.example.informationget.db.Information;
 
@@ -48,6 +49,9 @@ public class InfoItemAdapter extends RecyclerView.Adapter<InfoItemAdapter.ViewHo
                 Information info = mInfoList.get(position);
 
                 Log.d(TAG, "onClick: url is "+info.getUrl());
+                Intent intent = new Intent(mContext,DisplayActivity.class);
+                intent.putExtra(DisplayActivity.INFO_URL,info.getUrl());
+                mContext.startActivity(intent);
 
             }
         });
@@ -57,9 +61,6 @@ public class InfoItemAdapter extends RecyclerView.Adapter<InfoItemAdapter.ViewHo
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         Information info = mInfoList.get(position);
-        Log.d(TAG, "onBindViewHolder: position "+position);
-        Log.d(TAG, "onBindViewHolder: info.getDesc() :" + info.getDesc());
-        Log.d(TAG, "onBindViewHolder: hoder.infoTitle is "+holder.infoTitle);
 
         holder.infoTitle.setText(info.getDesc());
         holder.infoAuthor.setText(info.getWho());

@@ -43,14 +43,17 @@ public class MainActivity extends AppCompatActivity {
     private InfoItemAdapter adapter;
 
     private SwipeRefreshLayout swipeRefresh;
+    private String address;
+    private RecyclerView recyclerView;
+    private String currentType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
-        //setSupportActionBar(toolbar);
+        Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         swipeRefresh = (SwipeRefreshLayout)findViewById(R.id.swipe_refresh);
         swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
@@ -60,23 +63,7 @@ public class MainActivity extends AppCompatActivity {
                 refreshInfo();
             }
         });
-        /*
-        FloatingActionButton fab =(FloatingActionButton)findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //Toast.makeText(MainActivity.this, "FAB clicked", Toast.LENGTH_SHORT).show();
-                Snackbar.make(v,"Data deleted",Snackbar.LENGTH_SHORT).setAction(
-                        "Undo", new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                Toast.makeText(MainActivity.this, "Data restored", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                ).show();
-            }
-        });
-        */
+
 
         mDrawerlayout = (DrawerLayout)findViewById(R.id.drawer_layout);
 
@@ -95,34 +82,40 @@ public class MainActivity extends AppCompatActivity {
 
                 switch (item.getItemId()){
                     case R.id.nav_android:
-                        Log.d(TAG, "onNavigationItemSelected: nav_android");
-
+                        address = "http://gank.io/api/data/Android/20/1";
+                        currentType = "Android";
                         break;
 
                     case R.id.nav_ios:
-
+                        address = "http://gank.io/api/data/iOS/20/1";
+                        currentType = "iOS";
                         break;
 
                     case R.id.nav_web:
-
+                        address = "http://gank.io/api/data/%E5%89%8D%E7%AB%AF/20/1";
+                        currentType = "前端";
                         break;
 
                     case R.id.nav_app:
-
+                        address = "http://gank.io/api/data/App/20/1";
+                        currentType = "Android";
                         break;
 
                     case R.id.nav_fun:
-
+                        address = "http://gank.io/api/data/%E7%9E%8E%E6%8E%A8%E8%8D%90/20/1";
+                        currentType = "瞎推荐";
                         break;
 
                     case R.id.nav_others:
-
+                        address = "http://gank.io/api/data/%E6%8B%93%E5%B1%95%E8%B5%84%E6%BA%90/20/1";
+                        currentType = "拓展资源";
                         break;
 
                     default:
                         break;
 
                 }
+                queryInfo(address,currentType);
 
                 mDrawerlayout.closeDrawers();
                 return true;
@@ -130,7 +123,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         initInfo();
-        RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
+
+        recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
         GridLayoutManager layoutManager = new GridLayoutManager(this,1);
         recyclerView.setLayoutManager(layoutManager);
         adapter = new InfoItemAdapter(infoList);
@@ -140,11 +134,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void initInfo(){
 
-        infoList = DataSupport.findAll(Information.class);
+        infoList = DataSupport.where("type = ?", "Android").find(Information.class);
+
         if (infoList.size()>0){
             dataList.clear();
 
             for (Information information:infoList){
+                Log.d(TAG, "initInfo: information.getDesc() is " + information.getDesc());
                 dataList.add(information.getDesc());
             }
 
@@ -152,14 +148,38 @@ public class MainActivity extends AppCompatActivity {
 
 
         }else {
-            String address = "http://gank.io/api/data/Android/20/1";
+            address = "http://gank.io/api/data/Android/20/1";
 
-            queryFromServer(address,"information");
+            queryFromServer(address,"Android");
         }
+
+
 
     }
 
-    public void queryFromServer(String address,String information){
+    public void queryInfo(String address,String type) {
+        infoList = DataSupport.where("type = ?", type).find(Information.class);
+
+        if (infoList.size() > 0) {
+            dataList.clear();
+
+            for (Information information : infoList) {
+                Log.d(TAG, "initInfo: information.getDesc() is " + information.getDesc());
+                Log.d(TAG, "initInfo: information.gettype is " + information.getType());
+                dataList.add(information.getDesc());
+
+            }
+            Log.d(TAG, "queryInfo: infolist is "+infoList);
+
+            adapter = new InfoItemAdapter(infoList);
+            recyclerView.setAdapter(adapter);
+
+        }else {
+            queryFromServer(address,type);
+        }
+
+    }
+    public void queryFromServer(final String address, final String type){
 
         HttpUtil.sendOkHttpRequest(address, new Callback() {
             @Override
@@ -182,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
                 result = Util.handleGankApiResponse(responseText);
                 Log.d(TAG, "onResponse: result is " + result);
                 if (result){
-                    initInfo();
+                    queryInfo(address,type);
                 }
 
             }
@@ -203,8 +223,8 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        initInfo();
-                        adapter.notifyDataSetChanged();
+                        queryInfo(address,currentType);
+                        //adapter.notifyDataSetChanged();
                         swipeRefresh.setRefreshing(false);
                     }
                 });
@@ -215,6 +235,13 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu){
         //getMenuInflater().inflate(R.menu.toolbar,menu);
         return true;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        recyclerView.setAdapter(adapter);
+        adapter.notifyDataSetChanged();
     }
 
     @Override
