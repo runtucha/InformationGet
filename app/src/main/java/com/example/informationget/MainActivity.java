@@ -1,5 +1,9 @@
 package com.example.informationget;
 
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.graphics.Color;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -15,6 +19,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.informationget.db.Information;
@@ -46,14 +53,19 @@ public class MainActivity extends AppCompatActivity {
     private String address;
     private RecyclerView recyclerView;
     private String currentType;
-
+    private ProgressDialog progressDialog;
+    private Context mContext;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
+
+        final Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
+        toolbar.setTitle("Android");
         setSupportActionBar(toolbar);
+
+        mContext =this;
 
         swipeRefresh = (SwipeRefreshLayout)findViewById(R.id.swipe_refresh);
         swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
@@ -63,25 +75,37 @@ public class MainActivity extends AppCompatActivity {
                 refreshInfo();
             }
         });
-
-
         mDrawerlayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+/*
+        final TextView titleText = (TextView)findViewById(R.id.title_info);
+        Button navButton = (Button) findViewById(R.id.nav_button);
 
-        /*
+
+        navButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDrawerlayout.openDrawer(GravityCompat.START);
+            }
+        });
+
+*/
+
         ActionBar actionBar = getSupportActionBar();
         if (actionBar!= null){
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setHomeAsUpIndicator(R.drawable.ic_menu);
         }
-*/
-        NavigationView navigationView = (NavigationView)findViewById(R.id.nav_view);
+
+        final NavigationView navigationView = (NavigationView)findViewById(R.id.nav_view);
         navigationView.setCheckedItem(R.id.nav_android);
+
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 
                 switch (item.getItemId()){
                     case R.id.nav_android:
+                        //showProgressDialog();
                         address = "http://gank.io/api/data/Android/20/1";
                         currentType = "Android";
                         break;
@@ -115,15 +139,20 @@ public class MainActivity extends AppCompatActivity {
                         break;
 
                 }
-                queryInfo(address,currentType);
-
+                toolbar.setTitle(currentType);
+                //titleText.setText(currentType);
+                swipeRefresh.setRefreshing(true);
+                refreshInfo();
                 mDrawerlayout.closeDrawers();
+
+
                 return true;
             }
         });
 
         initInfo();
-
+        Log.d(TAG, "onCreate: currentType"+currentType);
+        toolbar.setTitle(currentType);
         recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
         GridLayoutManager layoutManager = new GridLayoutManager(this,1);
         recyclerView.setLayoutManager(layoutManager);
@@ -133,8 +162,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initInfo(){
+        address = "http://gank.io/api/data/Android/20/1";
+        currentType = "Android";
 
-        infoList = DataSupport.where("type = ?", "Android").find(Information.class);
+        infoList = DataSupport.where("type = ?", currentType).find(Information.class);
 
         if (infoList.size()>0){
             dataList.clear();
@@ -148,9 +179,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         }else {
-            address = "http://gank.io/api/data/Android/20/1";
 
-            queryFromServer(address,"Android");
+            queryFromServer(address,currentType);
         }
 
 
@@ -158,18 +188,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void queryInfo(String address,String type) {
+
         infoList = DataSupport.where("type = ?", type).find(Information.class);
 
         if (infoList.size() > 0) {
             dataList.clear();
 
             for (Information information : infoList) {
-                Log.d(TAG, "initInfo: information.getDesc() is " + information.getDesc());
-                Log.d(TAG, "initInfo: information.gettype is " + information.getType());
+
                 dataList.add(information.getDesc());
 
             }
-            Log.d(TAG, "queryInfo: infolist is "+infoList);
 
             adapter = new InfoItemAdapter(infoList);
             recyclerView.setAdapter(adapter);
@@ -214,8 +243,9 @@ public class MainActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
+
                 try {
-                    Thread.sleep(2000);
+                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -223,9 +253,11 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        Log.d(TAG, "run: address is " +address);
                         queryInfo(address,currentType);
                         //adapter.notifyDataSetChanged();
                         swipeRefresh.setRefreshing(false);
+
                     }
                 });
             }
@@ -237,40 +269,50 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    private void showProgressDialog(){
+        if (progressDialog == null){
+            progressDialog = new ProgressDialog(this);
+            progressDialog.setMessage("loading...");
+            progressDialog.setCanceledOnTouchOutside(false);
+        }
+
+        progressDialog.show();
+
+    }
+
+    private void closeProgressDialog(){
+        if (progressDialog != null){
+            progressDialog.dismiss();
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        closeProgressDialog();
+        Log.d(TAG, "onResume: ");
         recyclerView.setAdapter(adapter);
         adapter.notifyDataSetChanged();
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        /*
+
         switch(item.getItemId()){
             case android.R.id.home:
                 mDrawerlayout.openDrawer(GravityCompat.START);
                 break;
 
-            case R.id.backup:
-                Toast.makeText(this,"you clicked backup",Toast.LENGTH_SHORT
-                ).show();
-                break;
-
-            case R.id.delete:
-                Toast.makeText(this,"you clicked delete",Toast.LENGTH_SHORT
-                ).show();
-                break;
-
-            case R.id.settings:
-                Toast.makeText(this,"you clicked settings",Toast.LENGTH_SHORT
-                ).show();
-                break;
 
             default:
                 break;
 
-        }*/
+        }
         return true;
     }
 }

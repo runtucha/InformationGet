@@ -36,7 +36,8 @@ public class Util {
                     information.setWho(androidObject.getString("who"));
                     information.setType(androidObject.getString("type"));
                     information.setUrl(androidObject.getString("url"));
-                    information.setPublishedAt(androidObject.getString("publishedAt"));
+                    String publishedDate = androidObject.getString("publishedAt");
+                    information.setPublishedAt(publishedDate.substring(0,10));
                     information.save();
 
                 }
