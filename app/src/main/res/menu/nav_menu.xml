@@ -26,6 +26,10 @@
             android:id="@+id/nav_others"
             android:icon="@drawable/others"
             android:title="Others"/>
+        <item
+            android:id="@+id/nav_collected"
+            android:icon="@drawable/like"
+            android:title="Collection"/>
 
     </group>
 </menu>

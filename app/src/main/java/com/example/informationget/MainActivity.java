@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
 
                     case R.id.nav_app:
                         address = "http://gank.io/api/data/App/20/1";
-                        currentType = "Android";
+                        currentType = "App";
                         break;
 
                     case R.id.nav_fun:
@@ -135,12 +135,15 @@ public class MainActivity extends AppCompatActivity {
                         currentType = "拓展资源";
                         break;
 
+                    case R.id.nav_collected:
+                        currentType = "收藏";
+
                     default:
                         break;
 
                 }
                 toolbar.setTitle(currentType);
-                //titleText.setText(currentType);
+
                 swipeRefresh.setRefreshing(true);
                 refreshInfo();
                 mDrawerlayout.closeDrawers();
@@ -167,46 +170,37 @@ public class MainActivity extends AppCompatActivity {
 
         infoList = DataSupport.where("type = ?", currentType).find(Information.class);
 
-        if (infoList.size()>0){
-            dataList.clear();
-
-            for (Information information:infoList){
-                Log.d(TAG, "initInfo: information.getDesc() is " + information.getDesc());
-                dataList.add(information.getDesc());
-            }
-
-            //adapter.notifyDataSetChanged();
-
-
-        }else {
-
+        if (infoList.size()<=0){
             queryFromServer(address,currentType);
         }
-
-
 
     }
 
     public void queryInfo(String address,String type) {
 
-        infoList = DataSupport.where("type = ?", type).find(Information.class);
+        if (type.equals("收藏")){
+            infoList = DataSupport.where("isCollected = ?","true").find(Information.class);
+            Log.d(TAG, "queryInfo: infolist " + infoList);
+            Log.d(TAG, "queryInfo: size "+ infoList.size());
 
-        if (infoList.size() > 0) {
-            dataList.clear();
-
-            for (Information information : infoList) {
-
-                dataList.add(information.getDesc());
-
-            }
 
             adapter = new InfoItemAdapter(infoList);
             recyclerView.setAdapter(adapter);
 
-        }else {
-            queryFromServer(address,type);
-        }
 
+        }else {
+            infoList = DataSupport.where("type = ?", type).find(Information.class);
+
+
+            if (infoList.size() > 0) {
+
+                adapter = new InfoItemAdapter(infoList);
+                recyclerView.setAdapter(adapter);
+
+            } else {
+                queryFromServer(address, type);
+            }
+        }
     }
     public void queryFromServer(final String address, final String type){
 
@@ -231,7 +225,13 @@ public class MainActivity extends AppCompatActivity {
                 result = Util.handleGankApiResponse(responseText);
                 Log.d(TAG, "onResponse: result is " + result);
                 if (result){
-                    queryInfo(address,type);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            queryInfo(address,type);
+                        }
+                    });
+
                 }
 
             }
@@ -269,22 +269,6 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    private void showProgressDialog(){
-        if (progressDialog == null){
-            progressDialog = new ProgressDialog(this);
-            progressDialog.setMessage("loading...");
-            progressDialog.setCanceledOnTouchOutside(false);
-        }
-
-        progressDialog.show();
-
-    }
-
-    private void closeProgressDialog(){
-        if (progressDialog != null){
-            progressDialog.dismiss();
-        }
-    }
 
     @Override
     protected void onResume() {
@@ -294,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        closeProgressDialog();
+
         Log.d(TAG, "onResume: ");
         recyclerView.setAdapter(adapter);
         adapter.notifyDataSetChanged();

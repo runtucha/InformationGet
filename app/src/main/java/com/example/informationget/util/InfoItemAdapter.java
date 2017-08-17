@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -51,6 +52,7 @@ public class InfoItemAdapter extends RecyclerView.Adapter<InfoItemAdapter.ViewHo
                 Log.d(TAG, "onClick: url is "+info.getUrl());
                 Intent intent = new Intent(mContext,DisplayActivity.class);
                 intent.putExtra(DisplayActivity.INFO_URL,info.getUrl());
+                intent.putExtra(DisplayActivity.INFO_TYPE,info.getType());
                 mContext.startActivity(intent);
 
             }
@@ -59,12 +61,29 @@ public class InfoItemAdapter extends RecyclerView.Adapter<InfoItemAdapter.ViewHo
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
-        Information info = mInfoList.get(position);
+    public void onBindViewHolder(final ViewHolder holder, final int position) {
+        final Information info = mInfoList.get(position);
 
         holder.infoTitle.setText(info.getDesc());
         holder.infoAuthor.setText(info.getWho());
         holder.infoDate.setText(info.getPublishedAt());
+
+        holder.isCollected.setImageResource(info.getCollected().equals("true") ? R.drawable.like : R.drawable.unlike);
+        holder.isCollected.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (info.getCollected().equals("true")) {
+                    holder.isCollected.setImageResource(R.drawable.unlike);
+                    info.setCollected("false");
+                } else {
+                    holder.isCollected.setImageResource(R.drawable.like);
+                    info.setCollected("true");
+
+                }
+                info.save();
+
+            }
+        });
     }
 
     @Override
@@ -79,6 +98,7 @@ public class InfoItemAdapter extends RecyclerView.Adapter<InfoItemAdapter.ViewHo
         TextView infoTitle;
         TextView infoAuthor;
         TextView infoDate;
+        ImageButton isCollected;
 
         public ViewHolder(View itemView) {
             super(itemView);
@@ -87,6 +107,7 @@ public class InfoItemAdapter extends RecyclerView.Adapter<InfoItemAdapter.ViewHo
             infoTitle = (TextView)itemView.findViewById(R.id.item_title);
             infoAuthor = (TextView)itemView.findViewById(R.id.item_author);
             infoDate = (TextView)itemView.findViewById(R.id.item_date);
+            isCollected = (ImageButton) itemView.findViewById(R.id.item_collected);
 
         }
     }

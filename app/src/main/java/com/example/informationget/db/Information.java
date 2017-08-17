@@ -11,6 +11,15 @@ public class Information extends DataSupport{
     private String infoId;
     private String desc, url, who, type;
     private String publishedAt, lastChanged;
+    private String isCollected = "false";
+
+    public String getCollected() {
+        return isCollected;
+    }
+
+    public void setCollected(String collected) {
+        isCollected = collected;
+    }
 
     public String getInfoId() {
         return infoId;
